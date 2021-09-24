@@ -189,15 +189,18 @@ export class CheckoutComponent implements OnInit {
   onSubmit(){
     console.log("Handling the Submit button");
     console.log(this.checkoutFormGroup.get('customer').value);
-    console.log("The email is: "+this.checkoutFormGroup.get('customer').value.email);
-    console.log("The country for shipping is " + this.checkoutFormGroup.get('shippingAddress').value.country);
-    console.log("The state for shipping is " + this.checkoutFormGroup.get('shippingAddress').value.state);
+    console.log(this.checkoutFormGroup.get('shippingAddress').value);
+    console.log(this.checkoutFormGroup.get('billingAddress').value);
+    console.log(this.checkoutFormGroup.get('creditCard').value);
+    //console.log("The email is: "+this.checkoutFormGroup.get('customer').value.email);
+    //console.log("The country for shipping is " + this.checkoutFormGroup.get('shippingAddress').value.country);
+    //console.log("The state for shipping is " + this.checkoutFormGroup.get('shippingAddress').value.state);
 
     if (this.checkoutFormGroup.invalid){
       this.checkoutFormGroup.markAllAsTouched();
       return;
     }
-
+    
     //set up order
     let order = new Order();
     order.totalPrice = this.totalPrice;
@@ -213,7 +216,7 @@ export class CheckoutComponent implements OnInit {
     let purchase = new Purchase();
 
     //populate purchase - customer
-    purchase.customer = this.checkoutFormGroup.controls['costumer'].value;
+    purchase.customer = this.checkoutFormGroup.controls['customer'].value;
 
     //populate purchase - shipping Address
     purchase.shippingAddress = this.checkoutFormGroup.controls['shippingAddress'].value;
@@ -221,6 +224,7 @@ export class CheckoutComponent implements OnInit {
     const shippingCountry: Country = JSON.parse(JSON.stringify(purchase.shippingAddress.country));
     purchase.shippingAddress.state = shippingState.name;
     purchase.shippingAddress.country = shippingCountry.name;
+    
 
     //populate purchase - billing Address
     purchase.billingAddress = this.checkoutFormGroup.controls['billingAddress'].value;
@@ -228,40 +232,42 @@ export class CheckoutComponent implements OnInit {
     const billingCountry: Country = JSON.parse(JSON.stringify(purchase.billingAddress.country));
     purchase.billingAddress.state = billingState.name;
     purchase.billingAddress.country = billingCountry.name;
+    
 
     //populate purchase - order and orderItems
     purchase.order = order;
     purchase.orderItems = orderItems;
 
+    
     //call REST API via CheckoutService
-    this.checkoutService.placeOrder(purchase).subscribe(
-      {
-        next: response => {
-          alert(`Your order has been received.\nOrder tracking number: ${response.orderTrackingNumber}`);
-          // reset cart
-          this.resetCart();
-        },
-        error: err => {
-          alert(`There was an error: ${err.message}`);
-        }
+    this.checkoutService.placeOrder(purchase).subscribe({
+      next: response => {
+        alert(`Your order has been received.\nOrder tracking number: ${response.orderTrackingNumber}`);
+
+        // reset cart
+        this.resetCart();
+
+      },
+      error: err => {
+        alert(`There was an error: ${err.message}`);
       }
-    )
+    }
+  );
 
 
   }
 
   resetCart() {
-    //reset cart data 
+    // reset cart data
     this.cartService.cartItems = [];
     this.cartService.totalPrice.next(0);
     this.cartService.totalQuantity.next(0);
-
-    //reset the form
+    
+    // reset the form
     this.checkoutFormGroup.reset();
 
-    //navigate back to the products page
+    // navigate back to the products page
     this.router.navigateByUrl("/products");
-    
   }
 
   handleMonthsAndYears(){
